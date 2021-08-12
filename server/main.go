@@ -13,11 +13,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/api/createUser", createUser)
-
-	http.ListenAndServe(":8080", r)
+type User struct {
+	Id int `json:"id"`
+	Name string `json:"name"`
+	Password string `json:"password"`
 }
 
 //here are our db configs to connect to the database
@@ -28,45 +27,61 @@ const (
 	password = "postgres"
 	dbname = "simple"
 )
+//assigning the db globally so all functions can access it
+var db *sql.DB
 
-type User struct {
-	Name string `json:"name"`
-	Password string `json:"password"`
+
+func main() {
+	initDB()
+	r := mux.NewRouter()
+	r.HandleFunc("/api/createUser", createUser)
+
+	http.ListenAndServe(":8080", r)
 }
 
-func createUser(w http.ResponseWriter, r *http.Request)  {
+//initializing my database
+func initDB() {
+	var err error
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-    "password=%s dbname=%s sslmode=disable",
-    host, port, user, password, dbname)
+     "password=%s dbname=%s sslmode=disable",
+      host, port, user, password, dbname)
 
-	var u User
-
-	err := json.NewDecoder(r.Body).Decode(&u)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return 
-    }
-
-	db, err := sql.Open("postgres", psqlInfo)
+	  //ran into ALOT of errors here because I was writing: db, err := sql.... which was assigning db to a local variable, not assigning it to the global variable which it is doing now.
+	db, err = sql.Open("postgres", psqlInfo)
+	  	if err != nil {
+	  		panic(err)
+	   	}
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
-
+	//don't defer db.close() or else you'll spend 6 HOURS!!!!! trying to figure out why its not working
 	err = db.Ping()
-	if err != nil {
+		if err != nil {
 		panic(err)
-	}
-
-	sqlStatement := `
-	INSERT INTO users (name, password)
-	VALUES ($1, $2) 
-	RETURNING id`
-	id := 0
-	err = db.QueryRow(sqlStatement, u.Name, u.Password).Scan(&id)
-	if err != nil {
-  	panic(err)
-	}
-fmt.Println("New record ID is:", id)
-
+		}
+	fmt.Println("CONNECTED TO DB")
 }
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+	u := &User{}
+	err := json.NewDecoder(r.Body).Decode(u)
+	if err != nil {
+		fmt.Println("REQUEST BODY ERROR")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println(u.Name)
+	fmt.Println(u.Password)
+
+	sqlStatement :=`
+	INSERT INTO users (name, password)
+	VALUES ($1, $2)`
+	
+	fmt.Println("test", u)
+	_, err = db.Exec(sqlStatement, u.Name, u.Password)
+	if err != nil {
+  		fmt.Println(err)
+	}
+}
+

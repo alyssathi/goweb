@@ -35,6 +35,7 @@ func main() {
 	initDB()
 	r := mux.NewRouter()
 	r.HandleFunc("/api/createUser", createUser)
+	r.HandleFunc("/api/getUser/{id}", getUser)
 
 	http.ListenAndServe(":8080", r)
 }
@@ -85,3 +86,40 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getUser(w http.ResponseWriter, r *http.Request) {
+	//declaring an instance of the User struct as "u"
+	u := &User{}
+	//creates a map of variables found in the URL path
+	vars := mux.Vars(r)
+	//assigns a the var qid to the value found at the URL path of {id}
+	qid := vars["id"]
+
+	//creating variables that will store the values from the Query Scan function
+	var id int
+	var name string
+	var password string
+
+	//Query statement that will be requesting from the DB
+	sqlStatement :=`
+	SELECT * FROM users WHERE id = $1`
+
+	//QueryRow returns at most 1 row, and Scan can be attached here as it takes in a row and copies the columns from the DB into your Memory locations(&) above.
+	err := db.QueryRow(sqlStatement, qid).Scan(&id, &name, &password)
+	if err != nil {
+		fmt.Println(err)
+  }
+  	//setting our User struct to the values we just queried. json.Encode only takes in a struct/interface
+  	u.Id = id
+	u.Name = name
+	u.Password = password
+	fmt.Println(u)
+
+	//setting our header to JSON so our frontend knows what its retrieving
+	w.Header().Set("Content-Type", "application/json")
+
+	//Encoding our User Struct to JSON and sending it through our responseWriter
+    err = json.NewEncoder(w).Encode(u)
+	if err != nil {
+		fmt.Println(err)
+  }
+}

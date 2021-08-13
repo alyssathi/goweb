@@ -87,7 +87,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
-	//declaring an instance of the User struct as "u"
+	//declaring an instance of the User struct as "u" and u points to the memory address of User. using this syntax, we are able to access the fields of the struct and modify them without explicitly dereferencing them (*).
 	u := &User{}
 	//creates a map of variables found in the URL path
 	vars := mux.Vars(r)
@@ -103,7 +103,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	sqlStatement :=`
 	SELECT * FROM users WHERE id = $1`
 
-	//QueryRow returns at most 1 row, and Scan can be attached here as it takes in a row and copies the columns from the DB into your Memory locations(&) above.
+	//QueryRow returns at most 1 row, and Scan can be attached here as it takes in a row and copies the columns from the DB into your Memory locations(&) above. These must be in the same order as the columns.
 	err := db.QueryRow(sqlStatement, qid).Scan(&id, &name, &password)
 	if err != nil {
 		fmt.Println(err)

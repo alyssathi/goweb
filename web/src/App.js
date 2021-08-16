@@ -11,6 +11,7 @@ function App() {
 
 	async function handlePost(e) {
 		e.preventDefault();
+
 		setError("");
 		if (nameRef.current.value.trim() === "" || password.current.value.trim() === "") {
 			setError("You are trying to POST. Please enter some characters into the name and password fields.");
@@ -21,20 +22,6 @@ function App() {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ name: nameRef.current.value, password: passwordRef.current.value }),
-			});
-		} catch (err) {
-			console.log(err);
-		}
-	}
-
-	async function handlePut(e) {
-		e.preventDefault();
-		if (idRef.current.value.trim() === "") return;
-		try {
-			await fetch("/api/updateUser", {
-				method: "PUT",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ id: idRef.current.value, name: nameRef.current.value, password: passwordRef.current.value }),
 			});
 		} catch (err) {
 			console.log(err);
@@ -62,6 +49,21 @@ function App() {
 		}
 	}
 
+	async function handleUpdate(e) {
+		e.preventDefault();
+		if (idRef.current.value.trim() === "") return;
+		console.log(JSON.stringify({ id: idRef.current.value, name: nameRef.current.value, password: passwordRef.current.value }));
+		try {
+			await fetch("/api/updateUser", {
+				method: "PUT",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ id: idRef.current.value, name: nameRef.current.value, password: passwordRef.current.value }),
+			});
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
 	return (
 		<div className="App">
 			<div style={{ display: "flex", flexDirection: "column" }}>
@@ -71,7 +73,7 @@ function App() {
 			</div>
 			<div>
 				<button onClick={handlePost}>POST</button>
-				<button onClick={handlePut}>PUT/UPDATE</button>
+				<button onClick={handleUpdate}>PUT/UPDATE</button>
 				<button onClick={handleGet}>GET</button>
 			</div>
 			<div>

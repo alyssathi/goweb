@@ -64,6 +64,21 @@ function App() {
 		}
 	}
 
+	async function handleDelete(e) {
+		e.preventDefault();
+		if (idRef.current.value.trim() === "") return;
+		console.log(JSON.stringify({ id: idRef.current.value }));
+		try {
+			await fetch("/api/deleteUser", {
+				method: "PUT",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ id: idRef.current.value }),
+			});
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
 	return (
 		<div className="App">
 			<div style={{ display: "flex", flexDirection: "column" }}>
@@ -75,6 +90,7 @@ function App() {
 				<button onClick={handlePost}>POST</button>
 				<button onClick={handleUpdate}>PUT/UPDATE</button>
 				<button onClick={handleGet}>GET</button>
+				<button onClick={handleDelete}>DELETE</button>
 			</div>
 			<div>
 				<p>{error}</p>
